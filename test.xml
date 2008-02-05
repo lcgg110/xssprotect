@@ -1,0 +1,91 @@
+<project name="test" basedir=".">
+	<!-- Other projects call this project's test task to run unit tests and
+		 generate coverage reports.  Output files are written relative to the
+		 calling project. -->
+	
+	<property name="coveragereports" location="coveragereports" />
+	<property name="testreports" location="testreports" />
+	<property name="testresults" location="testresults" />
+
+	<target name="test" description="Execute Unit Tests" depends="instrument-for-coverage">
+
+		<delete dir="${testreports}" />
+		<delete dir="${testresults}" />
+		<delete dir="${coveragereports}" />
+
+		<mkdir dir="${testreports}" />
+		<mkdir dir="${testresults}" />
+		<mkdir dir="${coveragereports}" />
+		
+		 <javac srcdir="test" destdir="build" debug="on" deprecation="on" optimize="off">
+			<classpath location="build" />
+			<classpath>
+				<fileset dir="${inclib}">
+					<include name="*.jar" />
+				</fileset>
+				<pathelement location="build" />
+			</classpath>
+			<include name="com/blogspot/radialmind/**"/>
+		  </javac>
+
+		<junit fork="true" forkmode="once">
+			<sysproperty key="net.sourceforge.cobertura.datafile" file="${basedir}/cobertura.ser" />
+
+			<!-- instrumented classes must be first on the classpath -->
+			<classpath location="build/instrumented" />
+			<classpath>
+				<fileset dir="${inclib}">
+					<include name="*.jar" />
+				</fileset>
+				<pathelement location="build" />
+			</classpath>
+			<classpath refid="cobertura.classpath" />
+
+			<formatter type="xml" />
+			<batchtest todir="${testresults}">
+				<fileset dir="build">
+					<include name="**/*Test.class" />
+				</fileset>
+			</batchtest>
+		</junit>
+
+		<!-- unit test reports -->
+		<junitreport todir="${testreports}">
+			<fileset dir="${testresults}">
+				<include name="TEST-*.xml" />
+			</fileset>
+			<report format="frames" styledir="${antdir}/etc" todir="${testreports}" />
+		</junitreport>
+
+		<!-- coverage repors -->
+	    <cobertura-report format="html" destdir="${coveragereports}" srcdir="${src}" />
+		<delete file="${basedir}/cobertura.ser" />
+	</target>
+
+	<target name="instrument-for-coverage" description="Instrument compiled code for coverage analysis">
+		<delete dir="${coveragereports}" />
+		<mkdir dir="${coveragereports}" />
+		<mkdir dir="build/instrumented" />
+		
+		<cobertura-instrument todir="build/instrumented">
+			<includeClasses regex=".*" />
+			<excludeClasses regex=".*\Test.*" />
+
+			<instrumentationClasspath>
+				<pathelement location="build" />
+			</instrumentationClasspath>
+		</cobertura-instrument>
+	</target>
+
+	<!-- cobertura.home defined as Ant property within Eclipse -->
+	<property name="cobertura.dir" value="${cobertura.home}" />
+
+	<path id="cobertura.classpath">
+		<fileset dir="${cobertura.dir}">
+			<include name="cobertura.jar" />
+			<include name="lib/**/*.jar" />
+		</fileset>
+	</path>
+
+	<taskdef classpathref="cobertura.classpath" resource="tasks.properties" />
+</project>

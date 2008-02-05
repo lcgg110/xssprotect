@@ -1,0 +1,82 @@
+
+XSSProtect
+==========
+
+XSSProtect is a library with a pluggable XSS filter for reducing the vulnerability
+of XSS injection attacks. This library is useful for those people that would like to
+allow their end users to write or submit standard HTML-formatted text and show this
+text on other pages, either by using DHTML or by server-generated pages.
+
+How it works:
+=============
+
+The library generates a parse tree of the HTML snippet and then cleans it up and makes
+it X-HTML compliant. A plugged-in filter then filters the submitted code for
+potential XSS vulnerabilities. The result is clean HTML that should not contain 
+XSS attack vectors.
+
+Guarantees?
+===========
+
+No guarantees. New holes are found and browser inventions or bugs may be introduced that
+still make your application vulnerable to new attack vectors. That is why this library cannot
+guarantee security. However, a lot of effort has been made to verify the correct behaviour 
+of this library against known attack vectors. Please see the unit tests for those results.
+
+LICENSE:
+========
+
+This work is released under the terms of the General Public License GPL v3.
+
+
+How to use the library:
+=======================
+
+Very simple. Any method in Java that implements as follows:
+
+-----------------------------------------------------------
+
+import com.blogspot.radialmind.html.HTMLParser;
+import com.blogspot.radialmind.html.HandlingException;
+import com.blogspot.radialmind.xss.XSSFilter;
+
+public String filterHtmlForXSS( String html )
+{
+	StringReader reader = new StringReader( html );
+	StringWriter writer = new StringWriter();
+	
+	try {
+		HTMLParser.process( reader, writer, new XSSFilter(), true );
+		return writer.toString();
+	} catch (HandlingException e) {
+		// log error
+		// throw your exception
+	}
+}
+
+or:
+
+import com.blogspot.radialmind.html.HTMLParser;
+import com.blogspot.radialmind.html.HandlingException;
+import com.blogspot.radialmind.xss.XSSFilter;
+
+public File filterHtmlForXSSAndWriteToFile( String fileName )
+{
+	InputStreamReader reader = new InputStreamReader( new FileInputStream( fileName ) );
+
+	File result = FileUtils.createTempFile();
+	BufferedWriter writer = new BufferedWriter( new FileWriter( result ));
+
+	HTMLParser.process( reader, writer, new XSSFilter(), true );
+
+	writer.flush();
+	writer.close();
+
+	reader.close();
+
+	return result;
+}
+
+-------------------------------------------------------
+
+

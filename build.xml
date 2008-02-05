@@ -20,7 +20,7 @@
  */
 -->
 
-<project name="jXssProtect" default="dist" basedir=".">
+<project name="xssProtect" default="dist" basedir=".">
     <description>
         XSS protection library for Java
     </description>
@@ -34,10 +34,14 @@
 <property name="build" location="build"/>
 <property name="dist" location="dist"/>
 <property name="inclib" location="lib"/>
+<property name="vendorlibs" location="vendorlibs"/>
 
 <target name="clean" description="clean up">
   <delete dir="${build}"/>
   <delete dir="${dist}"/>
+  <delete dir="testresults"/>
+  <delete dir="testreports"/>
+  <delete dir="coveragereports"/>
 </target>
 	
 <target name="init">
@@ -49,6 +53,9 @@
 	    <fileset dir="${inclib}">
 	        <include name="*.jar"/>
 	    </fileset>
+	    <fileset dir="${vendorlibs}">
+	        <include name="*.jar"/>
+	    </fileset>	  
 	</path>		
 	
 </target>
@@ -57,13 +64,41 @@
 	description="compile the source"
 	depends="init">
 
-  <java fork="true" classname="antlr.Tool">
+  <java fork="true" classname="org.antlr.Tool">
+  		<jvmarg value="-Xmx512M"/>
 	  	<classpath refid="build.path"/>
+		<arg value="-lib"/> 
+	   	<arg value="${src}/com/blogspot/radialmind/html"/> 
 		<arg value="-o"/> 
-	   	<arg value="${src}/com/blogspot/radialmind/xss"/> 	
-  	  	<arg value="${grammar}/xssProtect.g"/>
+	   	<arg value="${src}/com/blogspot/radialmind/html"/> 	
+  	  	<arg value="${grammar}/htmlLexer.g"/>
   </java>
+
+    <java fork="true" classname="org.antlr.Tool">
+    		<jvmarg value="-Xmx512M"/>
+  	  	<classpath refid="build.path"/>
+    	<arg value="-lib"/> 
+       	<arg value="${src}/com/blogspot/radialmind/html"/> 
+    	<arg value="-o"/> 
+       	<arg value="${src}/com/blogspot/radialmind/html"/> 
+   	  	<arg value="${grammar}/htmlTreeParser.g"/>
+    </java>
+  	
+    <java fork="true" classname="org.antlr.Tool">
+    		<jvmarg value="-Xmx512M"/>
+  	  	<classpath refid="build.path"/>
+    	<arg value="-lib"/> 
+       	<arg value="${src}/com/blogspot/radialmind/html"/> 
+      	<arg value="-o"/> 
+       	<arg value="${src}/com/blogspot/radialmind/html"/> 
+   	  	<arg value="${grammar}/htmlParser.g"/>
+    </java>  
 	
+	 <javac srcdir="${src}" destdir="${build}" debug="on" deprecation="on" optimize="off">
+		<classpath refid="build.path"/>
+		<include name="com/blogspot/radialmind/**"/>
+	  </javac>
+
 </target>
 
 <target name="dist" 
@@ -75,6 +110,9 @@
 
 </target>
 
+	<target name="test" description="Run unit tests and generate reports">
+		<ant antfile="test.xml" target="test" />
+	</target>
 
 </project>
 
